@@ -2,7 +2,7 @@ import unittest
 
 from textnode import TextNode
 from leafnode import LeafNode
-from main import text_node_to_html_node
+from main import text_node_to_html_node, split_nodes_delimiter
 
 
 class TestMain(unittest.TestCase):
@@ -57,6 +57,69 @@ class TestMain(unittest.TestCase):
         except Exception as e:
             error = str(e)
         self.assertEqual(error, "Unknown text type for TextNode.")
+
+    def test_split_nodes_delimiter_code(self):
+        node = TextNode("This is text with a `code block` word", "text")
+        new_nodes = split_nodes_delimiter([node], "`", "code")
+
+        self.assertEqual(
+            new_nodes,
+            [
+                TextNode("This is text with a ", "text"),
+                TextNode("code block", "code"),
+                TextNode(" word", "text"),
+            ],
+        )
+
+    def test_split_nodes_delimiter_bold(self):
+        node = TextNode("This is text with a **bold** word", "text")
+        new_nodes = split_nodes_delimiter([node], "**", "bold")
+
+        self.assertEqual(
+            new_nodes,
+            [
+                TextNode("This is text with a ", "text"),
+                TextNode("bold", "bold"),
+                TextNode(" word", "text"),
+            ],
+        )
+
+    def test_split_nodes_delimiter_italic(self):
+        node = TextNode("This is text with a *italic* word", "text")
+        new_nodes = split_nodes_delimiter([node], "*", "italic")
+
+        self.assertEqual(
+            new_nodes,
+            [
+                TextNode("This is text with a ", "text"),
+                TextNode("italic", "italic"),
+                TextNode(" word", "text"),
+            ],
+        )
+
+    def test_split_nodes_delimiter_start_with(self):
+        node = TextNode("*Italic* is what this sentence starts with", "text")
+        new_nodes = split_nodes_delimiter([node], "*", "italic")
+
+        self.assertEqual(
+            new_nodes,
+            [
+                TextNode("Italic", "italic"),
+                TextNode(" is what this sentence starts with", "text"),
+            ],
+        )
+
+    def test_split_nodes_delimiter_ends_with(self):
+        node = TextNode("This sentence ends with *italic*", "text")
+        new_nodes = split_nodes_delimiter([node], "*", "italic")
+
+        self.assertEqual(
+            new_nodes,
+            [
+                TextNode("This sentence ends with ", "text"),
+                TextNode("italic", "italic"),
+            ],
+        )
 
 
 if __name__ == "__main__":
