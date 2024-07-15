@@ -1,8 +1,6 @@
 import re
 from textnode import TextNode
 from leafnode import LeafNode
-from parentnode import ParentNode
-from collections import deque
 
 
 def main():
@@ -77,6 +75,8 @@ def split_nodes_image(old_nodes):
 
         if len(images) == 0:
             new_nodes.append(old_node)
+            new_nodes.extend(split_nodes)
+            continue
 
         text = old_node.text
         for i in range(len(images)):
@@ -87,6 +87,9 @@ def split_nodes_image(old_nodes):
                 split_nodes.append(TextNode(split[0], "text"))
             split_nodes.append(TextNode(images[i][0], "image", url=images[i][1]))
             text = split[1]
+
+        if text:
+            split_nodes.append(TextNode(text, "text"))
 
         new_nodes.extend(split_nodes)
     return new_nodes
@@ -104,6 +107,8 @@ def split_nodes_link(old_nodes):
 
         if len(links) == 0:
             new_nodes.append(old_node)
+            new_nodes.extend(split_nodes)
+            continue
 
         text = old_node.text
         for i in range(len(links)):
@@ -115,8 +120,21 @@ def split_nodes_link(old_nodes):
             split_nodes.append(TextNode(links[i][0], "link", url=links[i][1]))
             text = split[1]
 
+        if text:
+            split_nodes.append(TextNode(text, "text"))
+
         new_nodes.extend(split_nodes)
     return new_nodes
+
+
+def text_to_textnodes(text):
+    node = TextNode(text, text_type="text")
+    nodes = split_nodes_delimiter([node], delimiter="**", text_type="bold")
+    nodes = split_nodes_delimiter(nodes, delimiter="*", text_type="italic")
+    nodes = split_nodes_delimiter(nodes, delimiter="`", text_type="code")
+    nodes = split_nodes_image(nodes)
+    nodes = split_nodes_link(nodes)
+    return nodes
 
 
 if __name__ == "__main__":

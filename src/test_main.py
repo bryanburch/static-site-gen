@@ -9,6 +9,7 @@ from main import (
     extract_markdown_images,
     extract_markdown_links,
     split_nodes_image,
+    text_to_textnodes,
 )
 
 
@@ -272,6 +273,92 @@ class TestMain(unittest.TestCase):
             ),
         ]
         self.assertEqual(new_nodes, expected)
+
+    def test_text_to_textnodes(self):
+        text = "This is **text** with an *italic* word and a `code block` and an ![obi wan image](https://i.imgur.com/fJRm4Vk.jpeg) and a [link](https://boot.dev)"
+        nodes = text_to_textnodes(text)
+        expected = [
+            TextNode("This is ", "text"),
+            TextNode("text", "bold"),
+            TextNode(" with an ", "text"),
+            TextNode("italic", "italic"),
+            TextNode(" word and a ", "text"),
+            TextNode("code block", "code"),
+            TextNode(" and an ", "text"),
+            TextNode("obi wan image", "image", "https://i.imgur.com/fJRm4Vk.jpeg"),
+            TextNode(" and a ", "text"),
+            TextNode("link", "link", "https://boot.dev"),
+        ]
+        self.assertEqual(nodes, expected)
+
+    def test_text_to_textnodes_just_text(self):
+        text = "This is text."
+        nodes = text_to_textnodes(text)
+        expected = [
+            TextNode("This is text.", "text"),
+        ]
+        self.assertEqual(nodes, expected)
+
+    def test_text_to_textnodes_just_bold(self):
+        text = "**This is bold.**"
+        nodes = text_to_textnodes(text)
+        expected = [
+            TextNode("This is bold.", "bold"),
+        ]
+        self.assertEqual(nodes, expected)
+
+    def test_text_to_textnodes_just_italic(self):
+        text = "*This is italic.*"
+        nodes = text_to_textnodes(text)
+        expected = [
+            TextNode("This is italic.", "italic"),
+        ]
+        self.assertEqual(nodes, expected)
+
+    def test_text_to_textnodes_just_italic(self):
+        text = "`This is code.`"
+        nodes = text_to_textnodes(text)
+        expected = [
+            TextNode("This is code.", "code"),
+        ]
+        self.assertEqual(nodes, expected)
+
+    def test_text_to_textnodes_just_image(self):
+        text = "![Image](https://i.imgur.com/fJRm4Vk.jpeg)"
+        nodes = text_to_textnodes(text)
+        expected = [
+            TextNode("Image", "image", "https://i.imgur.com/fJRm4Vk.jpeg"),
+        ]
+        self.assertEqual(nodes, expected)
+
+    def test_text_to_textnodes_just_link(self):
+        text = "[Link](https://i.imgur.com/fJRm4Vk.jpeg)"
+        nodes = text_to_textnodes(text)
+        expected = [
+            TextNode("Link", "link", "https://i.imgur.com/fJRm4Vk.jpeg"),
+        ]
+        self.assertEqual(nodes, expected)
+
+    def test_text_to_textnodes_empty_string(self):
+        text = ""
+        nodes = text_to_textnodes(text)
+        expected = []
+        self.assertEqual(nodes, expected)
+
+    def test_text_to_textnodes_many_same_delimiter(self):
+        text = "**This** is **text** with **alternating** bold **words**."
+        nodes = text_to_textnodes(text)
+        expected = [
+            TextNode("This", "bold"),
+            TextNode(" is ", "text"),
+            TextNode("text", "bold"),
+            TextNode(" with ", "text"),
+            TextNode("alternating", "bold"),
+            TextNode(" bold ", "text"),
+            TextNode("words", "bold"),
+            TextNode(".", "text"),
+        ]
+        self.assertEqual(nodes, expected)
 
 
 if __name__ == "__main__":
