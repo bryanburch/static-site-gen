@@ -3,6 +3,7 @@ import unittest
 from textnode import TextNode
 from leafnode import LeafNode
 from main import (
+    markdown_to_blocks,
     split_nodes_link,
     text_node_to_html_node,
     split_nodes_delimiter,
@@ -359,6 +360,62 @@ class TestMain(unittest.TestCase):
             TextNode(".", "text"),
         ]
         self.assertEqual(nodes, expected)
+
+    def test_markdown_to_blocks(self):
+        markdown = """# This is a heading
+
+This is a paragraph of text. It has some **bold** and *italic* words inside of it.
+
+* This is the first list item in a list block
+* This is a list item
+* This is another list item"""
+
+        blocks = markdown_to_blocks(markdown)
+
+        expected = [
+            "# This is a heading",
+            "This is a paragraph of text. It has some **bold** and *italic* words inside of it.",
+            """* This is the first list item in a list block
+* This is a list item
+* This is another list item""",
+        ]
+
+        self.assertEqual(blocks, expected)
+
+    def test_markdown_to_blocks_single(self):
+        markdown = "  # This is a heading "
+
+        blocks = markdown_to_blocks(markdown)
+
+        expected = ["# This is a heading"]
+
+        self.assertEqual(blocks, expected)
+
+    def test_markdown_to_blocks_trailing_new_lines(self):
+        markdown = """  # This is a heading
+
+        
+          
+        """
+
+        blocks = markdown_to_blocks(markdown)
+
+        expected = ["# This is a heading"]
+
+        self.assertEqual(blocks, expected)
+
+    def test_markdown_to_blocks_empty_string(self):
+        markdown = """ 
+
+        
+          
+        """
+
+        blocks = markdown_to_blocks(markdown)
+
+        expected = []
+
+        self.assertEqual(blocks, expected)
 
 
 if __name__ == "__main__":

@@ -137,5 +137,9 @@ def text_to_textnodes(text):
     return nodes
 
 
+def markdown_to_blocks(markdown):
+    return [b.strip() for b in markdown.split("\n\n") if b.strip()]
+
+
 if __name__ == "__main__":
     main()
