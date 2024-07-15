@@ -6,23 +6,12 @@ from collections import deque
 
 
 def main():
-    node = ParentNode(
-        "p",
-        [
-            LeafNode("b", "Bold text"),
-            ParentNode(
-                "ol",
-                [
-                    LeafNode("li", "Item 1"),
-                    LeafNode("li", "Item 2"),
-                    LeafNode("li", "Item 3"),
-                ],
-            ),
-            LeafNode("i", "italic text"),
-            LeafNode(None, "Normal text"),
-        ],
+    node = TextNode(
+        "This is text with an ![image](https://storage.googleapis.com/qvault-webapp-dynamic-assets/course_assets/zjjcJKZ.png) and another ![second image](https://storage.googleapis.com/qvault-webapp-dynamic-assets/course_assets/3elNhQu.png)",
+        "text",
     )
-    # print(node.to_html())
+    new_nodes = split_nodes_image([node])
+    print(new_nodes)
 
 
 def text_node_to_html_node(text_node):
@@ -76,4 +65,59 @@ def extract_markdown_links(text):
     return re.findall(r"\[(.*?)\]\((.*?)\)", text)
 
 
-main()
+def split_nodes_image(old_nodes):
+    new_nodes = []
+    for old_node in old_nodes:
+        if old_node.text_type != "text":
+            new_nodes.append(old_node)
+            continue
+
+        split_nodes = []
+        images = extract_markdown_images(old_node.text)
+
+        if len(images) == 0:
+            new_nodes.append(old_node)
+
+        text = old_node.text
+        for i in range(len(images)):
+            split = text.split(f"![{images[i][0]}]({images[i][1]})", 1)
+
+            # don't create nodes for empty string
+            if len(split[0]):
+                split_nodes.append(TextNode(split[0], "text"))
+            split_nodes.append(TextNode(images[i][0], "image", url=images[i][1]))
+            text = split[1]
+
+        new_nodes.extend(split_nodes)
+    return new_nodes
+
+
+def split_nodes_link(old_nodes):
+    new_nodes = []
+    for old_node in old_nodes:
+        if old_node.text_type != "text":
+            new_nodes.append(old_node)
+            continue
+
+        split_nodes = []
+        links = extract_markdown_links(old_node.text)
+
+        if len(links) == 0:
+            new_nodes.append(old_node)
+
+        text = old_node.text
+        for i in range(len(links)):
+            split = text.split(f"[{links[i][0]}]({links[i][1]})", 1)
+
+            # don't create nodes for empty string
+            if len(split[0]):
+                split_nodes.append(TextNode(split[0], "text"))
+            split_nodes.append(TextNode(links[i][0], "link", url=links[i][1]))
+            text = split[1]
+
+        new_nodes.extend(split_nodes)
+    return new_nodes
+
+
+if __name__ == "__main__":
+    main()
