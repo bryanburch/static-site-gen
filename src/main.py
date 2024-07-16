@@ -141,5 +141,43 @@ def markdown_to_blocks(markdown):
     return [b.strip() for b in markdown.split("\n\n") if b.strip()]
 
 
+def block_to_block_type(block):
+    if re.findall(r"^#{1,6} .+", block):
+        return "heading"
+    if re.findall(r"^`{3}.+`{3}$", block):
+        return "code"
+    if re.findall(r"^> .+", block):
+        return "quote"
+    if is_unordered_list(block):
+        return "unordered_list"
+    if is_ordered_list(block):
+        return "ordered_list"
+    return "paragraph"
+
+
+def is_unordered_list(block):
+    lines = [l for l in block.split("\n") if l]
+
+    for line in lines:
+        pattern = r"(\*|-) .+"
+        temp = re.findall(pattern, line)
+        if not temp:
+            return False
+
+    return True
+
+
+def is_ordered_list(block):
+    lines = [l for l in block.split("\n") if l]
+
+    for i, line in enumerate(lines):
+        pattern = "^" + str(i + 1) + r"\. .+"
+        temp = re.findall(pattern, line)
+        if not temp:
+            return False
+
+    return True
+
+
 if __name__ == "__main__":
     main()

@@ -3,6 +3,8 @@ import unittest
 from textnode import TextNode
 from leafnode import LeafNode
 from main import (
+    block_to_block_type,
+    is_ordered_list,
     markdown_to_blocks,
     split_nodes_link,
     text_node_to_html_node,
@@ -416,6 +418,85 @@ This is a paragraph of text. It has some **bold** and *italic* words inside of i
         expected = []
 
         self.assertEqual(blocks, expected)
+
+    def test_is_paragraph(self):
+        text = "This is a paragraph."
+
+        self.assertEqual(block_to_block_type(text), "paragraph")
+
+    def test_is_heading(self):
+        text = "## This is a heading."
+
+        self.assertEqual(block_to_block_type(text), "heading")
+
+    def test_is_heading_invalid(self):
+        text = "-# This is a heading."
+
+        self.assertEqual(block_to_block_type(text), "paragraph")
+
+    def test_is_code(self):
+        text = "```This is a code block```"
+
+        self.assertEqual(block_to_block_type(text), "code")
+
+    def test_is_code_invalid(self):
+        text = "``This is an invalid code block```"
+
+        self.assertEqual(block_to_block_type(text), "paragraph")
+
+    def test_is_quote(self):
+        text = "> This is a quote"
+
+        self.assertEqual(block_to_block_type(text), "quote")
+
+    def test_is_quote_invalid(self):
+        text = ">This is an invalid quote"
+
+        self.assertEqual(block_to_block_type(text), "paragraph")
+
+    def test_is_unordered_list(self):
+        text = """
+* This is a list item
+* Another item
+- Yet another item
+* Some other text
+- And one more item
+"""
+
+        self.assertEqual(block_to_block_type(text), "unordered_list")
+
+    def test_is_unordered_list_invalid(self):
+        text = """
+* This is a list item
+* Another item
+-Yet another item
+* Some other text
+- And one more item
+"""
+
+        self.assertEqual(block_to_block_type(text), "paragraph")
+
+    def test_is_ordered_list(self):
+        text = """
+1. This is a list item
+2. Another item
+3. Yet another item
+4. Some other text
+5. And one more item
+"""
+
+        self.assertEqual(block_to_block_type(text), "ordered_list")
+
+    def test_is_ordered_list_invalid(self):
+        text = """
+1. This is a list item
+2 Another item
+3. Yet another item
+4. Some other text
+5. And one more item
+"""
+
+        self.assertEqual(block_to_block_type(text), "paragraph")
 
 
 if __name__ == "__main__":
