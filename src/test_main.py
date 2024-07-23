@@ -1,10 +1,10 @@
 import unittest
 
+from parentnode import ParentNode
 from textnode import TextNode
 from leafnode import LeafNode
 from main import (
     block_to_block_type,
-    is_ordered_list,
     markdown_to_blocks,
     split_nodes_link,
     text_node_to_html_node,
@@ -13,6 +13,7 @@ from main import (
     extract_markdown_links,
     split_nodes_image,
     text_to_textnodes,
+    markdown_to_html_node,
 )
 
 
@@ -498,6 +499,86 @@ This is a paragraph of text. It has some **bold** and *italic* words inside of i
 
         self.assertEqual(block_to_block_type(text), "paragraph")
 
+    def test_markdown_to_html_node_just_heading(self):
+        markdown = "# H1 heading."
+        html_node = markdown_to_html_node(markdown)
 
+        expected = ParentNode(
+            tag="div", children=LeafNode(tag=f"h1", value="H1 heading.")
+        )
+        self.assertEqual(html_node, expected)
+
+    def test_markdown_to_html_node_just_code(self):
+        markdown = "```import pandas as pd```"
+        html_node = markdown_to_html_node(markdown)
+
+        expected = ParentNode(
+            tag="div",
+            children=ParentNode(
+                tag="pre", children=LeafNode(tag=f"code", value="import pandas as pd")
+            ),
+        )
+        self.assertEqual(html_node, expected)
+
+    def test_markdown_to_html_node_just_quote(self):
+        markdown = "> Part of the journey is the end."
+        html_node = markdown_to_html_node(markdown)
+
+        expected = ParentNode(
+            tag="div",
+            children=LeafNode(
+                tag="blockquote", value="Part of the journey is the end."
+            ),
+        )
+        self.assertEqual(html_node, expected)
+
+    def test_markdown_to_html_node_just_unordered_list(self):
+        markdown = """- Apples
+- Bananas
+- Oranges"""
+        html_node = markdown_to_html_node(markdown)
+
+        expected = ParentNode(
+            tag="div",
+            children=ParentNode(
+                tag="ul",
+                children=[
+                    LeafNode(tag="li", value="Apples"),
+                    LeafNode(tag="li", value="Bananas"),
+                    LeafNode(tag="li", value="Oranges"),
+                ],
+            ),
+        )
+        self.assertEqual(html_node, expected)
+
+    def test_markdown_to_html_node_just_unordered_list(self):
+        markdown = """1. Morning
+2. Afternoon
+3. Evening"""
+        html_node = markdown_to_html_node(markdown)
+
+        expected = ParentNode(
+            tag="div",
+            children=ParentNode(
+                tag="ol",
+                children=[
+                    LeafNode(tag="li", value="Morning"),
+                    LeafNode(tag="li", value="Afternoon"),
+                    LeafNode(tag="li", value="Evening"),
+                ],
+            ),
+        )
+        self.assertEqual(html_node, expected)
+
+
+"""example markdown for later testing
+# This is a heading
+
+This is a paragraph of text. It has some **bold** and *italic* words inside of it.
+
+* This is the first list item in a list block
+* This is a list item
+* This is another list item
+"""
 if __name__ == "__main__":
     unittest.main()

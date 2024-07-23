@@ -1,15 +1,27 @@
 import re
+from parentnode import ParentNode
 from textnode import TextNode
 from leafnode import LeafNode
 
 
 def main():
-    node = TextNode(
-        "This is text with an ![image](https://storage.googleapis.com/qvault-webapp-dynamic-assets/course_assets/zjjcJKZ.png) and another ![second image](https://storage.googleapis.com/qvault-webapp-dynamic-assets/course_assets/3elNhQu.png)",
-        "text",
+    # node = TextNode(
+    #     "This is text with an ![image](https://storage.googleapis.com/qvault-webapp-dynamic-assets/course_assets/zjjcJKZ.png) and another ![second image](https://storage.googleapis.com/qvault-webapp-dynamic-assets/course_assets/3elNhQu.png)",
+    #     "text",
+    # )
+    # new_nodes = split_nodes_image([node])
+    # print(new_nodes)
+
+    markdown = "```import pandas as pd```"
+    html_node = markdown_to_html_node(markdown)
+
+    expected = ParentNode(
+        tag="div",
+        children=ParentNode(
+            tag="pre", children=LeafNode(tag=f"code", value="import pandas as pd")
+        ),
     )
-    new_nodes = split_nodes_image([node])
-    print(new_nodes)
+    print(html_node == expected)
 
 
 def text_node_to_html_node(text_node):
@@ -177,6 +189,59 @@ def is_ordered_list(block):
             return False
 
     return True
+
+
+def markdown_to_html_node(markdown):
+    blocks = markdown_to_blocks(markdown)
+
+    children = []
+    for block in blocks:
+        block_type = block_to_block_type(block)
+        match block_type:
+            case "heading":
+                hashtags_before_text = block.split(" ")[0]
+                num_of_hashtags = len(hashtags_before_text)
+                text_after_hashtags = block[num_of_hashtags + 1 :]
+                children.append(
+                    LeafNode(tag=f"h{num_of_hashtags}", value=text_after_hashtags)
+                )
+            case "code":
+                children.append(
+                    ParentNode(
+                        tag="pre", children=LeafNode(tag="code", value=block[3:-3])
+                    )
+                )
+            case "quote":
+                children.append(LeafNode(tag="blockquote", value=block[2:]))
+            case "unordered_list":
+                children.append(
+                    ParentNode(
+                        tag="ul",
+                        children=[
+                            LeafNode(tag="li", value=text[2:])
+                            for text in block.split("\n")
+                        ],
+                    )
+                )
+            case "ordered_list":
+                children.append(
+                    ParentNode(
+                        tag="ol",
+                        children=[
+                            LeafNode(tag="li", value=text[3:])
+                            for text in block.split("\n")
+                        ],
+                    )
+                )
+            case _:
+                children.append(LeafNode(tag="p", value=block))
+
+    return ParentNode(tag="div", children=children)
+
+
+def text_to_children(text):
+    text_nodes = text_to_textnodes(text)
+    return [text_node_to_html_node(text_node) for text_node in text_nodes]
 
 
 if __name__ == "__main__":
