@@ -504,7 +504,27 @@ This is a paragraph of text. It has some **bold** and *italic* words inside of i
         html_node = markdown_to_html_node(markdown)
 
         expected = ParentNode(
-            tag="div", children=LeafNode(tag=f"h1", value="H1 heading.")
+            tag="div",
+            children=ParentNode(
+                tag=f"h1", children=LeafNode(tag=None, value="H1 heading.")
+            ),
+        )
+        self.assertEqual(html_node, expected)
+
+    def test_markdown_to_html_node_heading_with_inline(self):
+        markdown = "# A *fancy* heading."
+        html_node = markdown_to_html_node(markdown)
+
+        expected = ParentNode(
+            tag="div",
+            children=ParentNode(
+                tag=f"h1",
+                children=[
+                    LeafNode(tag=None, value="A "),
+                    LeafNode(tag="i", value="fancy"),
+                    LeafNode(tag=None, value=" heading."),
+                ],
+            ),
         )
         self.assertEqual(html_node, expected)
 
@@ -515,7 +535,32 @@ This is a paragraph of text. It has some **bold** and *italic* words inside of i
         expected = ParentNode(
             tag="div",
             children=ParentNode(
-                tag="pre", children=LeafNode(tag=f"code", value="import pandas as pd")
+                tag="pre",
+                children=ParentNode(
+                    tag=f"code",
+                    children=LeafNode(tag=None, value="import pandas as pd"),
+                ),
+            ),
+        )
+        self.assertEqual(html_node, expected)
+
+    def test_markdown_to_html_node_code_with_inline(self):
+        markdown = "```import **pandas** as **pd**```"
+        html_node = markdown_to_html_node(markdown)
+
+        expected = ParentNode(
+            tag="div",
+            children=ParentNode(
+                tag="pre",
+                children=ParentNode(
+                    tag=f"code",
+                    children=[
+                        LeafNode(tag=None, value="import "),
+                        LeafNode(tag="b", value="pandas"),
+                        LeafNode(tag=None, value=" as "),
+                        LeafNode(tag="b", value="pd"),
+                    ],
+                ),
             ),
         )
         self.assertEqual(html_node, expected)
@@ -526,8 +571,29 @@ This is a paragraph of text. It has some **bold** and *italic* words inside of i
 
         expected = ParentNode(
             tag="div",
-            children=LeafNode(
-                tag="blockquote", value="Part of the journey is the end."
+            children=ParentNode(
+                tag="blockquote",
+                children=LeafNode(tag=None, value="Part of the journey is the end."),
+            ),
+        )
+        self.assertEqual(html_node, expected)
+
+    def test_markdown_to_html_node_quote_with_inline(self):
+        markdown = "> Part of the journey is the end. - [Stark](https://www.youtube.com/watch?v=TcMBFSGVi1c)"
+        html_node = markdown_to_html_node(markdown)
+
+        expected = ParentNode(
+            tag="div",
+            children=ParentNode(
+                tag="blockquote",
+                children=[
+                    LeafNode(tag=None, value="Part of the journey is the end. - "),
+                    LeafNode(
+                        tag="a",
+                        value="Stark",
+                        props={"href": "https://www.youtube.com/watch?v=TcMBFSGVi1c"},
+                    ),
+                ],
             ),
         )
         self.assertEqual(html_node, expected)
@@ -543,15 +609,47 @@ This is a paragraph of text. It has some **bold** and *italic* words inside of i
             children=ParentNode(
                 tag="ul",
                 children=[
-                    LeafNode(tag="li", value="Apples"),
-                    LeafNode(tag="li", value="Bananas"),
-                    LeafNode(tag="li", value="Oranges"),
+                    ParentNode(tag="li", children=LeafNode(value="Apples")),
+                    ParentNode(tag="li", children=LeafNode(value="Bananas")),
+                    ParentNode(tag="li", children=LeafNode(value="Oranges")),
                 ],
             ),
         )
         self.assertEqual(html_node, expected)
 
-    def test_markdown_to_html_node_just_unordered_list(self):
+    def test_markdown_to_html_node_unordered_list_with_inline(self):
+        markdown = """- Apples ![Apple Inc.](https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Apple_logo_black.svg/135px-Apple_logo_black.svg.png)
+- Bananas
+- Oranges"""
+        html_node = markdown_to_html_node(markdown)
+
+        expected = ParentNode(
+            tag="div",
+            children=ParentNode(
+                tag="ul",
+                children=[
+                    ParentNode(
+                        tag="li",
+                        children=[
+                            LeafNode(value="Apples "),
+                            LeafNode(
+                                tag="img",
+                                value="",
+                                props={
+                                    "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Apple_logo_black.svg/135px-Apple_logo_black.svg.png",
+                                    "alt": "Apple Inc.",
+                                },
+                            ),
+                        ],
+                    ),
+                    ParentNode(tag="li", children=LeafNode(value="Bananas")),
+                    ParentNode(tag="li", children=LeafNode(value="Oranges")),
+                ],
+            ),
+        )
+        self.assertEqual(html_node, expected)
+
+    def test_markdown_to_html_node_just_ordered_list(self):
         markdown = """1. Morning
 2. Afternoon
 3. Evening"""
@@ -562,17 +660,121 @@ This is a paragraph of text. It has some **bold** and *italic* words inside of i
             children=ParentNode(
                 tag="ol",
                 children=[
-                    LeafNode(tag="li", value="Morning"),
-                    LeafNode(tag="li", value="Afternoon"),
-                    LeafNode(tag="li", value="Evening"),
+                    ParentNode(tag="li", children=LeafNode(value="Morning")),
+                    ParentNode(tag="li", children=LeafNode(value="Afternoon")),
+                    ParentNode(tag="li", children=LeafNode(value="Evening")),
                 ],
             ),
         )
         self.assertEqual(html_node, expected)
 
+    def test_markdown_to_html_node_ordered_list_with_inline(self):
+        markdown = """1. First there's morning
+2. *Then* there's afternoon
+3. **Finally** there's evening"""
+        html_node = markdown_to_html_node(markdown)
 
-"""example markdown for later testing
-# This is a heading
+        expected = ParentNode(
+            tag="div",
+            children=ParentNode(
+                tag="ol",
+                children=[
+                    ParentNode(
+                        tag="li", children=LeafNode(value="First there's morning")
+                    ),
+                    ParentNode(
+                        tag="li",
+                        children=[
+                            LeafNode(tag="i", value="Then"),
+                            LeafNode(value=" there's afternoon"),
+                        ],
+                    ),
+                    ParentNode(
+                        tag="li",
+                        children=[
+                            LeafNode(tag="b", value="Finally"),
+                            LeafNode(value=" there's evening"),
+                        ],
+                    ),
+                ],
+            ),
+        )
+        self.assertEqual(html_node, expected)
+
+    def test_markdown_to_html_node_just_paragraph(self):
+        markdown = "This is a paragraph of text."
+        html_node = markdown_to_html_node(markdown)
+
+        expected = ParentNode(
+            tag="div",
+            children=ParentNode(
+                tag="p", children=LeafNode(value="This is a paragraph of text.")
+            ),
+        )
+        self.assertEqual(html_node, expected)
+
+    def test_markdown_to_html_node_paragraph_with_inline(self):
+        markdown = "This is a paragraph of text. It has some **bold** and *italic* words inside of it."
+        html_node = markdown_to_html_node(markdown)
+
+        expected = ParentNode(
+            tag="div",
+            children=ParentNode(
+                tag="p",
+                children=[
+                    LeafNode(value="This is a paragraph of text. It has some "),
+                    LeafNode(tag="b", value="bold"),
+                    LeafNode(value=" and "),
+                    LeafNode(tag="i", value="italic"),
+                    LeafNode(value=" words inside of it."),
+                ],
+            ),
+        )
+        self.assertEqual(html_node, expected)
+
+    def test_markdown_to_html_node_multiple_blocks(self):
+        markdown = """# This is a heading
+
+This is a paragraph of text.
+
+* This is the first list item in a list block
+* This is a list item
+* This is another list item
+"""
+        html_node = markdown_to_html_node(markdown)
+
+        expected = ParentNode(
+            tag="div",
+            children=[
+                ParentNode(tag="h1", children=LeafNode(value="This is a heading")),
+                ParentNode(
+                    tag="p", children=LeafNode(value="This is a paragraph of text.")
+                ),
+                ParentNode(
+                    tag="ul",
+                    children=[
+                        ParentNode(
+                            tag="li",
+                            children=LeafNode(
+                                value="This is the first list item in a list block"
+                            ),
+                        ),
+                        ParentNode(
+                            tag="li", children=LeafNode(value="This is a list item")
+                        ),
+                        ParentNode(
+                            tag="li",
+                            children=LeafNode(value="This is another list item"),
+                        ),
+                    ],
+                ),
+            ],
+        )
+
+        self.assertEqual(html_node, expected)
+
+    def test_markdown_to_html_node_multiple_blocks_with_inline(self):
+        markdown = """# This is a heading
 
 This is a paragraph of text. It has some **bold** and *italic* words inside of it.
 
@@ -580,5 +782,45 @@ This is a paragraph of text. It has some **bold** and *italic* words inside of i
 * This is a list item
 * This is another list item
 """
+        html_node = markdown_to_html_node(markdown)
+
+        expected = ParentNode(
+            tag="div",
+            children=[
+                ParentNode(tag="h1", children=LeafNode(value="This is a heading")),
+                ParentNode(
+                    tag="p",
+                    children=[
+                        LeafNode(value="This is a paragraph of text. It has some "),
+                        LeafNode(tag="b", value="bold"),
+                        LeafNode(value=" and "),
+                        LeafNode(tag="i", value="italic"),
+                        LeafNode(value=" words inside of it."),
+                    ],
+                ),
+                ParentNode(
+                    tag="ul",
+                    children=[
+                        ParentNode(
+                            tag="li",
+                            children=LeafNode(
+                                value="This is the first list item in a list block"
+                            ),
+                        ),
+                        ParentNode(
+                            tag="li", children=LeafNode(value="This is a list item")
+                        ),
+                        ParentNode(
+                            tag="li",
+                            children=LeafNode(value="This is another list item"),
+                        ),
+                    ],
+                ),
+            ],
+        )
+
+        self.assertEqual(html_node, expected)
+
+
 if __name__ == "__main__":
     unittest.main()

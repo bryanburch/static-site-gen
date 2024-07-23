@@ -171,7 +171,7 @@ def is_unordered_list(block):
     lines = [l for l in block.split("\n") if l]
 
     for line in lines:
-        pattern = r"(\*|-) .+"
+        pattern = r"^(\*|-) .+"
         temp = re.findall(pattern, line)
         if not temp:
             return False
@@ -203,22 +203,33 @@ def markdown_to_html_node(markdown):
                 num_of_hashtags = len(hashtags_before_text)
                 text_after_hashtags = block[num_of_hashtags + 1 :]
                 children.append(
-                    LeafNode(tag=f"h{num_of_hashtags}", value=text_after_hashtags)
+                    ParentNode(
+                        tag=f"h{num_of_hashtags}",
+                        children=text_to_children(text_after_hashtags),
+                    )
                 )
             case "code":
                 children.append(
                     ParentNode(
-                        tag="pre", children=LeafNode(tag="code", value=block[3:-3])
+                        tag="pre",
+                        children=ParentNode(
+                            tag="code", children=text_to_children(block[3:-3])
+                        ),
                     )
                 )
             case "quote":
-                children.append(LeafNode(tag="blockquote", value=block[2:]))
+                children.append(
+                    ParentNode(
+                        tag="blockquote",
+                        children=text_to_children(block[2:]),
+                    )
+                )
             case "unordered_list":
                 children.append(
                     ParentNode(
                         tag="ul",
                         children=[
-                            LeafNode(tag="li", value=text[2:])
+                            ParentNode(tag="li", children=text_to_children(text[2:]))
                             for text in block.split("\n")
                         ],
                     )
@@ -228,13 +239,13 @@ def markdown_to_html_node(markdown):
                     ParentNode(
                         tag="ol",
                         children=[
-                            LeafNode(tag="li", value=text[3:])
+                            ParentNode(tag="li", children=text_to_children(text[3:]))
                             for text in block.split("\n")
                         ],
                     )
                 )
             case _:
-                children.append(LeafNode(tag="p", value=block))
+                children.append(ParentNode(tag="p", children=text_to_children(block)))
 
     return ParentNode(tag="div", children=children)
 
